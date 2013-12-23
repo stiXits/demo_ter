@@ -20,7 +20,7 @@ public:
     virtual ~Painter();
 
     virtual bool initialize();
-    
+
     virtual void paint(float timef);
     virtual void resize(
         int width
@@ -57,4 +57,6 @@ protected:
 
     GLuint m_height;
     GLuint m_ground;
+    GLuint m_water;
+    GLuint m_caustics;
 };

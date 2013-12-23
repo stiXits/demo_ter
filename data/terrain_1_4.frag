@@ -1,19 +1,18 @@
 #version 140
 
-uniform sampler2D ground;
+uniform sampler2D water;
+uniform float a_time;
+
+in vec3 a_position;
+
 
 out vec4 fragColor;
 
-// Task_1_4 - ToDo Begin
-
-// Note: start with a copy of your 1_3 shader and add the lambert term 
-// based on a static light source (use const variable)...
 
 void main()
 {
-	//fragColor = lambert * /*as before ... */;
-
-	fragColor = vec4(vec3(0.0), 1.0);
-	
-	// Task_1_4 - ToDo End
+	fragColor = texture2D(water, a_position.xz + a_time/10);
+	fragColor.a = 0.5;
 }
+
+

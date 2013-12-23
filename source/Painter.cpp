@@ -29,7 +29,7 @@ Painter::~Painter()
     qDeleteAll(m_programs);
     qDeleteAll(m_shaders);
 
-    delete m_cube;
+//    delete m_cube;
 }
 
 bool Painter::initialize()
@@ -39,17 +39,17 @@ bool Painter::initialize()
 
     // Initialize Test draw - ToDo: remove this!
 
-    m_programs[TestProgram] = createBasicShaderProgram("data/default.vert", "data/default.frag");
+ /*   m_programs[TestProgram] = createBasicShaderProgram("data/default.vert", "data/default.frag");
 
     // Note: this is on way to use attribute location (the badd way...)
     m_cube = new UnitCube(*this
         , m_programs[TestProgram]->attributeLocation("a_vertex")
         , m_programs[TestProgram]->attributeLocation("a_normal"));
 
+*/
 
-
-    // Note: As always, feel free to change/modify parameters .. as long as its possible to 
-    // see the terrain and navigation basically works, everything is ok. 
+    // Note: As always, feel free to change/modify parameters .. as long as its possible to
+    // see the terrain and navigation basically works, everything is ok.
 
     glClearColor(1.f, 1.f, 1.f, 0.f);
 
@@ -64,12 +64,14 @@ bool Painter::initialize()
     m_transforms[1].translate(-.5f, 0.f, -.5f);
 
     m_terrains << new Terrain(256, *this);
-    // m_terrains << new Terrain(2, *this); // this should give you a plane that you might use as a water plane ;)
+    m_terrains << new Terrain(2, *this); // this should give you a plane that you might use as a water plane ;)
 
 
     // Note: You can absolutely modify/paint/change these textures if you like.
     m_height = getOrCreateTexture("data/height.png"); // e.g., there is a height2 or use L3DT (see moodle)
     m_ground = getOrCreateTexture("data/ground.png");
+    m_water = getOrCreateTexture("data/water.png");
+    m_caustics = getOrCreateTexture("data/caustics.png");
 
 
     // uebung 1_1
@@ -82,7 +84,8 @@ bool Painter::initialize()
     m_programs[PaintMode3] = createBasicShaderProgram("data/terrain_1_3.vert", "data/terrain_1_3.frag");
 
     // uebung 1_4 +
-    m_programs[PaintMode4] = createBasicShaderProgram("data/terrain_1_4.vert", "data/terrain_1_4.frag"); 
+    m_programs[PaintMode4] = createBasicShaderProgram("data/terrain_1_4.vert", "data/terrain_1_4.frag");
+    m_programs[PaintMode5] = createBasicShaderProgram("data/terrain_1_4_1.vert", "data/terrain_1_4_1.frag");
     //m_programs[PaintMode5] = createBasicShaderProgram("data/terrain_1_5.vert", "data/terrain_1_5.frag");
     //...
 
@@ -110,8 +113,8 @@ GLuint Painter::getOrCreateTexture(const QString & fileName)
 
     glBindTexture(GL_TEXTURE_2D, texture);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -179,7 +182,7 @@ void Painter::update(const QList<QOpenGLShaderProgram *> & programs)
         if (programs.contains(program) && program->isLinked() && i != TestProgram)
         {
             program->bind();
-            
+
             // Note: transform might be the modelview projection matrix, or similar.
             // the identifier was choosen to show that all transform is done before
             // GPU, to reduce vertex shader workload. So feel free to modify...
@@ -195,6 +198,8 @@ void Painter::update(const QList<QOpenGLShaderProgram *> & programs)
             case PaintMode6:
             case PaintMode5:
             case PaintMode4:
+                program->setUniformValue("water",   2);
+                program->setUniformValue("caustics",   3);
             case PaintMode3:
                 program->setUniformValue("ground",   1);
             case PaintMode2:
@@ -243,13 +248,13 @@ void Painter::paint(float timef)
 void Painter::paint_1_1(float timef)
 {
     // ToDo: if you habe seen the cube, remove this!
-    if (m_programs[TestProgram]->isLinked())
+ /*   if (m_programs[TestProgram]->isLinked())
     {
         m_programs[TestProgram]->bind();
         m_cube->draw(*this);
         m_programs[TestProgram]->release();
     }
-
+*/
     QOpenGLShaderProgram * program(m_programs[PaintMode1]);
     Terrain * terrain(m_terrains[0]);
 
@@ -277,6 +282,8 @@ void Painter::paint_1_2(float timef)
         glBindTexture(GL_TEXTURE_2D, m_height);
 
         program->bind();
+        program->setUniformValue("a_offset", QVector3D(0.1f, 0.1f, 0.1f));
+        program->setUniformValue("a_time", timef);
         terrain->draw(*this);
         program->release();
 
@@ -315,5 +322,56 @@ void Painter::paint_1_3(float timef)
 
 void Painter::paint_1_4(float timef)
 {
-    // ... 
+    QOpenGLShaderProgram * program(m_programs[PaintMode5]);
+    QOpenGLShaderProgram * waterProgram(m_programs[PaintMode4]);
+    Terrain * terrain(m_terrains[1]);
+    Terrain * water(m_terrains[2]);
+
+    if (program->isLinked())
+    {
+        glActiveTexture(GL_TEXTURE0);
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, m_height);
+
+        glActiveTexture(GL_TEXTURE1);
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, m_ground);
+
+        glActiveTexture(GL_TEXTURE2);
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, m_water);
+
+        glActiveTexture(GL_TEXTURE3);
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, m_caustics);
+
+        program->bind();
+        terrain->draw(*this);
+        program->setUniformValue("a_time", timef);
+        program->release();
+
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+        waterProgram->bind();
+        waterProgram->setUniformValue("a_time", timef);
+        water->draw(*this);
+        waterProgram->release();
+        glDisable(GL_BLEND);
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glDisable(GL_TEXTURE_2D);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glDisable(GL_TEXTURE_2D);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glDisable(GL_TEXTURE_2D);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glDisable(GL_TEXTURE_2D);
+
+    }
 }

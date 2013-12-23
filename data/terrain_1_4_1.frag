@@ -1,6 +1,8 @@
 #version 140
 
 uniform sampler2D ground;
+uniform sampler2D caustics;
+uniform float a_time;
 
 in float a_height;
 in vec3 a_texelPosition;
@@ -43,7 +45,6 @@ void main()
 	//float i = ... ;
 	//fragColor = mix(texture2D(ground, uv0), texture2D(ground, uv1), i);
 
-
 	if(step(0.25, a_height) == 0)
 	{
         offset1 = 0.75;
@@ -82,6 +83,11 @@ void main()
 //    fragColor.rgb = fragColor.rgb - vec3(shadow)/4 - vec3(0.05);
 	// Task_1_3 - ToDo End
 	fragColor.rgb -= vec3(clamp(shadow, 0.0, 1.0));
+
+	if(a_height <= 0.21)
+    {
+        fragColor -= texture2D(caustics, a_texelPosition.xz / vec2(1.0, 0.1) + a_time/5)/5;
+    }
 
 }
 
