@@ -226,7 +226,6 @@ void Painter::update(const QList<QOpenGLShaderProgram *> & programs)
 void Painter::paint(float timef)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
     switch (mode())
     {
     case PaintMode1:

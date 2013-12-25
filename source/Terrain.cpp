@@ -57,7 +57,6 @@ void Terrain::draw(
     gl.glPrimitiveRestartIndex(Terrain::primitiveRestartIndex);
     gl.glEnable(GL_CULL_FACE);
     gl.glEnable(GL_TEXTURE_2D);
-
     m_vao.bind();
     gl.glDrawElements(mode, m_size*m_size*4, GL_UNSIGNED_INT, 0);
     m_vao.release();
