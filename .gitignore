@@ -1,3 +1,4 @@
+
 # Compiled Object files
 *.slo
 *.lo
@@ -11,3 +12,17 @@
 *.lai
 *.la
 *.a
+/build
+/_start-depends.bat
+/_configure.bat
+/_open-project.bat
+/_start-cmake-gui.bat
+/cg2sandboxdD.log
+/build11
+/_open-project11.bat
+/cg2sandbox.log
+
+# Qt Creator User Files
+*.txt.user
+/_run.bat
+
